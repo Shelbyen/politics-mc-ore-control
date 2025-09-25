@@ -20,6 +20,7 @@ public class NoiseConfiguration implements PlacementModifierConfiguration {
 
     public final static Set<Setting> SETTINGS;
     public final static Setting ACTIVATE = new Setting("activate", BooleanType.class);
+    public final static Setting MAX_COUNT = new Setting("max-count", IntegerType.class);
     public final static Setting SEED = new Setting("seed", IntegerType.class);
     public final static Setting OCTAVES = new Setting("octaves", IntegerType.class);
     public final static Setting FREQUENCY = new Setting("frequency", FloatType.class);
@@ -29,6 +30,7 @@ public class NoiseConfiguration implements PlacementModifierConfiguration {
     static {
         Set<Setting> settings = new LinkedHashSet<>();
         settings.add(ACTIVATE);
+        settings.add(MAX_COUNT);
         settings.add(SEED);
         settings.add(OCTAVES);
         settings.add(FREQUENCY);
@@ -38,6 +40,7 @@ public class NoiseConfiguration implements PlacementModifierConfiguration {
 
     private final FeaturePlacementModifier<?> placementModifier;
     private BooleanValue activate;
+    private IntegerValue maxCount;
     private IntegerValue seed;
     private IntegerValue octaves;
     private FloatValue frequency;
@@ -45,9 +48,10 @@ public class NoiseConfiguration implements PlacementModifierConfiguration {
 
     private boolean dirty = false;
 
-    public NoiseConfiguration(FeaturePlacementModifier<?> placementModifier, BooleanValue activate, IntegerValue seed, IntegerValue octaves, FloatValue frequency, FloatValue amplitude) {
+    public NoiseConfiguration(FeaturePlacementModifier<?> placementModifier, BooleanValue activate, IntegerValue maxCount, IntegerValue seed, IntegerValue octaves, FloatValue frequency, FloatValue amplitude) {
         this.placementModifier = placementModifier;
         this.activate = activate;
+        this.maxCount = maxCount;
         this.seed = seed;
         this.octaves = octaves;
         this.frequency = frequency;
@@ -56,6 +60,10 @@ public class NoiseConfiguration implements PlacementModifierConfiguration {
 
     public BooleanValue getActivate() {
         return activate;
+    }
+
+    public IntegerValue getMaxCount() {
+        return maxCount;
     }
 
     public IntegerValue getSeed() {
@@ -90,6 +98,8 @@ public class NoiseConfiguration implements PlacementModifierConfiguration {
     public Value<?, ?, ?> getValue(@NotNull Setting setting) {
         if (setting == ACTIVATE) {
             return getActivate();
+        } else if (setting == MAX_COUNT) {
+            return getMaxCount();
         } else if (setting == SEED) {
             return getSeed();
         } else if (setting == OCTAVES) {
@@ -107,6 +117,10 @@ public class NoiseConfiguration implements PlacementModifierConfiguration {
     public void setValue(@NotNull Setting setting, Value<?, ?, ?> value) {
         if (setting == ACTIVATE) {
             activate = (BooleanValue) value;
+            dirty = true;
+            return;
+        } else if (setting == MAX_COUNT) {
+            maxCount = (IntegerValue) value;
             dirty = true;
             return;
         } else if (setting == SEED) {
@@ -136,7 +150,7 @@ public class NoiseConfiguration implements PlacementModifierConfiguration {
             return true;
         }
 
-        return activate != null && activate.isDirty() || seed != null && seed.isDirty() || octaves != null && octaves.isDirty() || frequency != null && frequency.isDirty() || amplitude != null && amplitude.isDirty();
+        return activate != null && activate.isDirty() || seed != null && seed.isDirty() || maxCount != null && maxCount.isDirty() || octaves != null && octaves.isDirty() || frequency != null && frequency.isDirty() || amplitude != null && amplitude.isDirty();
     }
 
     @Override
@@ -145,6 +159,9 @@ public class NoiseConfiguration implements PlacementModifierConfiguration {
 
         if (activate != null) {
             activate.saved();
+        }
+        if (maxCount != null) {
+            maxCount.saved();
         }
         if (seed != null) {
             seed.saved();
