@@ -13,10 +13,14 @@ import de.derfrzocker.feature.api.util.Parser;
 import de.derfrzocker.feature.common.feature.generator.configuration.EmptyFeatureConfiguration;
 import de.derfrzocker.feature.common.feature.generator.configuration.OreFeatureConfiguration;
 import de.derfrzocker.feature.common.feature.placement.ActivationModifier;
+import de.derfrzocker.feature.common.feature.placement.NoiseModifier;
 import de.derfrzocker.feature.common.feature.placement.configuration.ActivationConfiguration;
+import de.derfrzocker.feature.common.feature.placement.configuration.NoiseConfiguration;
 import de.derfrzocker.feature.common.util.ValueLocationUtil;
 import de.derfrzocker.feature.common.value.bool.FixedBooleanValue;
+import de.derfrzocker.feature.common.value.number.FixedFloatValue;
 import de.derfrzocker.feature.common.value.number.IntegerType;
+import de.derfrzocker.feature.common.value.number.integer.FixedIntegerValue;
 import de.derfrzocker.feature.common.value.offset.AboveBottomOffsetIntegerType;
 import de.derfrzocker.feature.common.value.offset.BelowTopOffsetIntegerType;
 import de.derfrzocker.feature.impl.v1_21_R5.extra.OreVeinHandler;
@@ -37,12 +41,8 @@ import de.derfrzocker.ore.control.api.config.ConfigManager;
 import de.derfrzocker.ore.control.impl.v1_21_R5.NMSReflectionNames;
 import de.derfrzocker.ore.control.impl.v1_21_R5.feature.generator.EmptyConfigurationGeneratorHook;
 import de.derfrzocker.ore.control.impl.v1_21_R5.feature.generator.OreConfigurationGeneratorHook;
-import de.derfrzocker.ore.control.impl.v1_21_R5.placement.ActivationModifierHook;
-import de.derfrzocker.ore.control.impl.v1_21_R5.placement.CountModifierHook;
-import de.derfrzocker.ore.control.impl.v1_21_R5.placement.HeightRangeModifierHook;
-import de.derfrzocker.ore.control.impl.v1_21_R5.placement.RarityModifierHook;
-import de.derfrzocker.ore.control.impl.v1_21_R5.placement.SurfaceRelativeThresholdModifierHook;
-import de.derfrzocker.ore.control.impl.v1_21_R5.placement.SurfaceWaterDepthModifierHook;
+import de.derfrzocker.ore.control.impl.v1_21_R5.placement.*;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -172,6 +172,10 @@ public class NMSReplacer_v1_21_R5 implements NMSReplacer {
             // inject activation / deactivation logic
             Optional<FeaturePlacementModifier<?>> modifierOptional = registries.getPlacementModifierRegistry().get(ActivationModifier.KEY);
             modifierOptional.ifPresent(modifiers::add);
+
+            // inject noise generation logic
+            Optional<FeaturePlacementModifier<?>> noiseModifierOptional = registries.getPlacementModifierRegistry().get(NoiseModifier.KEY);
+            noiseModifierOptional.ifPresent(modifiers::add);
 
             registries.getFeatureRegistry().register(new de.derfrzocker.feature.api.Feature(NamespacedKey.fromString(placedFeatureRegistry.getKey(placedFeature).toString()), featureGenerator.get(), modifiers));
         }
@@ -346,8 +350,15 @@ public class NMSReplacer_v1_21_R5 implements NMSReplacer {
         }
 
         // inject activation / deactivation logic
-        Optional<FeaturePlacementModifier<?>> modifierOptional = registries.getPlacementModifierRegistry().get(ActivationModifier.KEY);
+        Optional<FeaturePlacementModifier<?>> modifierOptional = registries.getPlacementModifierRegistry().get( ActivationModifier.KEY);
         modifierOptional.ifPresent(modifier -> placementConfiguration.add(0, new ActivationConfiguration(modifier, new FixedBooleanValue(true))));
+
+        // inject noise generation logic
+        Optional<FeaturePlacementModifier<?>> noiseModifierOptional = registries.getPlacementModifierRegistry().get(NoiseModifier.KEY);
+        noiseModifierOptional.ifPresent(modifier -> placementConfiguration.add(0,
+                new NoiseConfiguration(modifier, new FixedBooleanValue(false),
+                        new FixedIntegerValue(1), new FixedIntegerValue(1),
+                        new FixedFloatValue(0.5f), new FixedFloatValue(0.5f))));
 
         Config config = new Config(placementConfiguration, featureConfiguration);
 
@@ -471,6 +482,10 @@ public class NMSReplacer_v1_21_R5 implements NMSReplacer {
         // inject activation / deactivation logic
         Optional<FeaturePlacementModifier<?>> modifierOptional = registries.getPlacementModifierRegistry().get(ActivationModifier.KEY);
         modifierOptional.ifPresent(modifier -> placementModifiers.add(0, new ActivationModifierHook(oreControlManager, biome, key)));
+
+        // inject noise generation logic
+        Optional<FeaturePlacementModifier<?>> noiseModifierOptional = registries.getPlacementModifierRegistry().get(NoiseModifier.KEY);
+        noiseModifierOptional.ifPresent(modifier -> placementModifiers.add(0, new NoiseModifierHook(oreControlManager, biome, key)));
 
         if (configuredFeature.feature() instanceof OreFeature) {
             return new PlacedFeature(Holder.direct(new ConfiguredFeature(OreConfigurationGeneratorHook.createOreHook(oreControlManager, key, biome), configuredFeature.config())), placementModifiers);

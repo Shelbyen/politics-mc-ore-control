@@ -3,6 +3,7 @@ package de.derfrzocker.ore.control;
 import com.google.common.base.Charsets;
 import de.derfrzocker.feature.api.util.Parser;
 import de.derfrzocker.feature.common.feature.placement.ActivationModifier;
+import de.derfrzocker.feature.common.feature.placement.NoiseModifier;
 import de.derfrzocker.feature.common.ruletest.AlwaysTrueRuleTestType;
 import de.derfrzocker.feature.common.ruletest.BlockMatchRuleTestType;
 import de.derfrzocker.feature.common.ruletest.BlockStateMatchRuleTestType;
@@ -218,7 +219,10 @@ public class OreControl extends JavaPlugin implements Listener {
     private void registerFeatureGenerators(OreControlRegistries registries) {
     }
 
-    private void registerPlacementModifier(OreControlRegistries registries) { registries.getPlacementModifierRegistry().register(new ActivationModifier(registries)); }
+    private void registerPlacementModifier(OreControlRegistries registries) {
+        registries.getPlacementModifierRegistry().register(new ActivationModifier(registries));
+        registries.getPlacementModifierRegistry().register(new NoiseModifier(registries));
+    }
 
     @Override // TODO move to own class
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
